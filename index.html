@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribble Writer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .toolbar {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #333;
+            min-width: 80px;
+        }
+
+        .tool-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-btn.active {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .size-slider {
+            width: 120px;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .size-display {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #333;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .font-selector, .language-selector, .format-selector {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .font-selector:hover, .language-selector:hover, .format-selector:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .translate-btn, .apply-format-btn {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .translate-btn:hover, .apply-format-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .auto-recognition-toggle {
+            background: linear-gradient(45deg, #00b894 0%, #00cec9 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auto-recognition-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .auto-recognition-toggle.active {
+            background: linear-gradient(45deg, #6c5ce7 0%, #a29bfe 100%);
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+        }
+
+        .canvas-section {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+
+        #drawingCanvas {
+            display: block;
+            cursor: crosshair;
+            background: white;
+            width: 100%;
+            height: auto;
+            min-height: 500px;
+        }
+
+        .recognition-section {
+            flex: 1;
+            min-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .recognition-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .ai-badge {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .live-badge {
+            background: linear-gradient(45deg, #00b894 0%, #00cec9 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .recognized-text {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            border: 2px dashed #ddd;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+            font-family: 'Inter', sans-serif;
+            white-space: pre-wrap;
+            flex-grow: 1;
+        }
+
+        .recognized-text.has-content {
+            border: 2px solid #4facfe;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.2);
+        }
+
+        .recognized-text.live-updating {
+            border: 2px solid #00b894;
+            box-shadow: 0 5px 15px rgba(0, 184, 148, 0.3);
+        }
+
+        .recognized-text.font-roboto { font-family: 'Roboto', sans-serif; }
+        .recognized-text.font-open-sans { font-family: 'Open Sans', sans-serif; }
+        .recognized-text.font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .recognized-text.font-playfair-display { font-family: 'Playfair Display', serif; }
+        .recognized-text.font-source-code-pro { font-family: 'Source Code Pro', monospace; }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-btn {
+            background: linear-gradient(45deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .save-btn {
+            background: linear-gradient(45deg, #00b894 0%, #00cec9 100%);
+        }
+
+        .copy-btn {
+            background: linear-gradient(45deg, #fd79a8 0%, #fdcb6e 100%);
+        }
+
+        .recognize-now-btn {
+            background: linear-gradient(45deg, #5D80E6 0%, #61B1FF 100%);
+        }
+
+
+        .title {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .processing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .recognition-history {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            color: #333;
+        }
+
+        .history-item {
+            padding: 5px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-out;
+            border: 2px solid #667eea;
+            width: 90%;
+            max-width: 400px;
+        }
+        .suggestion-prompt {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.15em;
+            text-align: center;
+        }
+        .suggestions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+        }
+        .suggestion-btn {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1em;
+            flex-grow: 1;
+            min-width: 100px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .suggestion-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) translateX(-50%); }
+            to { opacity: 1; transform: translateY(0) translateX(-50%); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .toolbar {
+                justify-content: center;
+            }
+            
+            .tool-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+
+            .suggestion-box {
+                bottom: 10px;
+                padding: 10px;
+            }
+            .suggestion-prompt {
+                font-size: 1em;
+            }
+            .suggestion-btn {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">✍️ Scribble Writer</h1>
+    
+    <div class="container">
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-btn active" id="penTool">✏️ Pen</button>
+                <button class="tool-btn" id="brushTool">🖌️ Brush</button>
+                <button class="tool-btn" id="eraserTool">🧽 Eraser</button>
+            </div>
+            
+            <div class="tool-group">
+                <label style="color: white; font-weight: 600;">Color:</label>
+                <input type="color" class="color-picker" id="colorPicker" value="#000000">
+            </div>
+            
+            <div class="tool-group">
+                <label style="color: white; font-weight: 600;">Size:</label>
+                <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="8">
+                <div class="size-display" id="sizeDisplay">8</div>
+            </div>
+
+            <div class="tool-group">
+                <label style="color: white; font-weight: 600;">Font Style:</label>
+                <select id="fontSelector" class="font-selector">
+                    <option value="Inter">Inter (Default)</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Open Sans">Open Sans</option>
+                    <option value="Montserrat">Montserrat</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                    <option value="Source Code Pro">Source Code Pro</option>
+                </select>
+            </div>
+
+            <div class="tool-group">
+                <button class="auto-recognition-toggle active" id="autoToggle">🔍 Auto Recognition: ON</button>
+            </div>
+
+            <div class="tool-group">
+                <label style="color: white; font-weight: 600;">Translate To:</label>
+                <select id="languageSelector" class="language-selector">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="hi">Hindi</option>
+                    <option value="te">Telugu</option>
+                </select>
+                <button class="translate-btn" id="translateBtn">🌐 Translate Text</button>
+            </div>
+
+            <div class="tool-group">
+                <label style="color: white; font-weight: 600;">Format As:</label>
+                <select id="formatSelector" class="format-selector">
+                    <option value="none">None</option>
+                    <option value="bullet-list">Bullet List</option>
+                    <option value="numbered-list">Numbered List</option>
+                    <option value="paragraph">Paragraph</option>
+                </select>
+                <button class="apply-format-btn" id="applyFormatBtn">✨ Apply Format</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="canvas-section">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas"></canvas>
+                </div>
+                
+                <div class="action-btns">
+                    <button class="action-btn recognize-now-btn" id="recognizeButton">✨ Recognize Now</button>
+                    <button class="action-btn clear-btn" id="clearBtn">🗑️ Clear Canvas</button>
+                    <button class="action-btn save-btn" id="saveBtn">💾 Save Drawing</button>
+                </div>
+            </div>
+            
+            <div class="recognition-section">
+                <div class="recognition-header">
+                    <h3 style="color: white; margin: 0;">Live Recognition</h3>
+                    <div class="ai-badge">AI POWERED</div>
+                    <div class="live-badge" id="liveBadge">LIVE</div>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                
+                <div id="processingIndicator" class="processing-indicator">
+                    <div class="spinner"></div>
+                    <span>Analyzing handwriting...</span>
+                </div>
+                
+                <div class="recognized-text" id="recognizedText">
+                    Start writing on the canvas!
+                </div>
+                
+                <div class="action-btns">
+                    <button class="action-btn copy-btn" id="copyBtn" disabled>📋 Copy Text</button>
+                </div>
+
+                <div class="recognition-history" id="recognitionHistory">
+                    <strong>Recognition History:</strong>
+                    <div id="historyList"></div>
+                </div>
+
+                <div id="suggestionBox" class="suggestion-box">
+                    <span class="suggestion-prompt">Did you mean:</span>
+                    <div id="suggestionsContainer" class="suggestions-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
